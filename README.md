@@ -1,2 +1,2 @@
-# DigikalaWebScarper
-Digikala Webscarper Connected to excel
+# Digikala Web scarper
+This digikala webscarper can scarpe Prices , Discount Values , Product Names and Stars.
