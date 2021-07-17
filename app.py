@@ -400,7 +400,7 @@ def greetUser():
     for option in selectedScarpingOptions:
         exec(option)
     writer(excelFile)
-
+    os.remove("data.txt")
 
     print("Finish.\n\n\n")
     print("*"*10)
