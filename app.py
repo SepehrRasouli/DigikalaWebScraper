@@ -8,11 +8,11 @@ import re
 import os
 import datetime
 
-time = datetime.datetime.now()
-timeSheet = ""
+now = datetime.datetime.now()
+time_sheet = ""
 meta = ""
 
-DigikalaFilters = [
+DIGIKALA_FILTERS = [
     "&only_plus=1&",
     "&only_fresh=1&",
     "&has_ship_by_seller=1&",
@@ -32,133 +32,133 @@ DigikalaFilters = [
     "&sortby=25&",
 ]
 
-dataToWrite = []
+date_to_write = []
 
 
 def cleanizer(filename):
-    """Cleans up Extracted Data"""
-    print("Cleaning Up More...")
-    global dataToWrite
-    dataToWrite = []
-    if filename == "Pricesextracted.txt":
+    """Cleans up extracted data."""
+    print("Cleaning up more...")
+    global date_to_write
+    date_to_write = []
+    if filename == "extracted_prices.txt":
         # To handle تومان better
-        with open(filename, "r", encoding="utf-8") as readdata:
-            data = readdata.readlines()
-            data = [x.strip() for x in data]
-        fileClear(filename)
-        for element in data:
+        with open(filename, "r", encoding="utf-8") as f:
+            context = f.readlines()
+            context = [x.strip() for x in context]
+        empty_file(filename)
+        for element in context:
             if element == "تومان" or element == "":
                 continue
             if element == "None":
-                dataToWrite.append("ناموجود")
+                date_to_write.append("ناموجود")
                 continue
 
             else:
-                dataToWrite.append(element + " تومان ")
+                date_to_write.append(element + " تومان ")
         os.remove(filename)
-        del data
+        del context
 
-    elif filename == "DiscountValuesextracted.txt":
-        with open(filename, "r", encoding="utf-8") as readdata:
-            data = readdata.readlines()
-            data = [x.strip() for x in data]
-        fileClear(filename)
-        for element in data:
+    elif filename == "extracted_discount_values.txt":
+        with open(filename, "r", encoding="utf-8") as f:
+            context = f.readlines()
+            context = [x.strip() for x in context]
+        empty_file(filename)
+        for element in context:
             if element:
-                dataToWrite.append(element)
+                date_to_write.append(element)
 
             else:
                 continue
         os.remove(filename)
-        del data
-    elif filename == "Starsextracted.txt":
-        with open(filename, "r", encoding="utf-8") as readdata:
-            data = readdata.readlines()
-            data = [x.strip() for x in data]
-        fileClear(filename)
-        with open(filename, "a", encoding="utf-8") as writedata:
-            for element in data:
+        del context
+    elif filename == "extracted_stars.txt":
+        with open(filename, "r", encoding="utf-8") as f:
+            context = f.readlines()
+            context = [x.strip() for x in context]
+        empty_file(filename)
+        with open(filename, "a", encoding="utf-8") as f:
+            for element in context:
                 if element.startswith("(") or element == "":
                     continue
                 else:
-                    dataToWrite.append(element + "\n")
+                    date_to_write.append(element + "\n")
 
-        del data
+        del context
         os.remove(filename)
 
     else:
-        with open(filename, "r", encoding="utf-8") as readdata:
-            data = readdata.readlines()
-            data = [x.strip() for x in data]
-        fileClear(filename)
-        for element in data:
+        with open(filename, "r", encoding="utf-8") as f:
+            context = f.readlines()
+            context = [x.strip() for x in context]
+        empty_file(filename)
+        for element in context:
             if element == "فروش ویژه" or element == "Ad" or element == "":
                 continue
             else:
-                dataToWrite.append(element)
+                date_to_write.append(element)
         os.remove(filename)
-        del data
+        del context
 
 
-def writer(excelFile):
-    global meta, dataToWrite, timeSheet
-    """ Writes Data To Excel."""
+def writer(excel_file):
+    global meta, date_to_write, time_sheet
+    """Writes the data to an Excel file."""
     # checkfilevalidity
-    print("Writing Data...")
-    if os.path.isfile(excelFile):
+    print("Writing data...")
+    if os.path.isfile(excel_file):
         try:
-            wb = load_workbook(filename=excelFile)
-            if timeSheet not in wb.sheetnames:
-                wb.create_sheet(timeSheet)
+            wb = load_workbook(filename=excel_file)
+            if time_sheet not in wb.sheetnames:
+                wb.create_sheet(time_sheet)
             else:
                 pass
-            ws = wb[timeSheet]
+            ws = wb[time_sheet]
             colnum = 0
-            if meta == "DiscountValues":
+            if meta == "discount_values":
                 colnum = 1
-            elif meta == "Stars":
+            elif meta == "stars":
                 colnum = 2
-            elif meta == "Names":
+            elif meta == "names":
                 colnum = 3
             else:
                 colnum = 4
             i = 1
-            for element in dataToWrite:
+            for element in date_to_write:
                 ws.cell(row=i, column=colnum, value=element)
                 i += 1
-            wb.save(filename=excelFile)
+            wb.save(filename=excel_file)
             wb.close()
-            del dataToWrite
+            del date_to_write
 
         except PermissionError:
-            print("Please Close The excel file")
-            del dataToWrite
-            greetUser()
+            print("Please close the Excel file and try again.")
+            del date_to_write
+            main()
     else:
-        print("Excel File dosent exist. Aborting...")
-        del dataToWrite
-        greetUser()
+        print("The Excel file doesn't exist!")
+        del date_to_write
+        main()
 
 
-def fileClear(filename):
-    """Removes All Contents of a file"""
+def empty_file(filename):
+    """Removes all context of a file."""
     with open(filename, "w") as temp:
         temp.write(" ")
 
 
-def extractdata(subject, pageRange, selectedDigikalaFilters):
-    """Gets data from digikala search"""
+def extract_data(subject, pages_limit, selected_filters):
+    """Gets data from digikala search."""
 
-    fileClear("data.txt")
-    for num in range(1, pageRange):
+    empty_file("pages_result.txt")
+    for num in range(1, pages_limit):
         try:
-            with open("data.txt", "a", encoding="utf-8") as f:
+            with open("pages_result.txt", "a", encoding="utf-8") as f:
                 meta = "&sortby=22" if num > 1 else ""
                 r = requests.get(
-                    f"https://www.digikala.com/search/?{''.join(selectedDigikalaFilters)}q={subject}&pageno={num}{meta}"
+                    f"https://www.digikala.com/search/?{''.join(selected_filters)}q={subject}&pageno={num}{meta}"
                 )
                 print(
-                    f"https://www.digikala.com/search/?{''.join(selectedDigikalaFilters)}q={subject}&pageno={num}{meta}"
+                    f"https://www.digikala.com/search/?{''.join(selected_filters)}q={subject}&pageno={num}{meta}"
                 )
                 f.write(str(r.text) + "\n")
         except ConnectionError:
@@ -166,20 +166,20 @@ def extractdata(subject, pageRange, selectedDigikalaFilters):
 
 
 def extractor(filename):
-    """Extracts the wanted content."""
-    print("Extracting Data...")
+    """Extracts the wanted context."""
+    print("Extracting data...")
     global meta
-    if "productDiscountsResult.txt" == filename:
-        meta = "DiscountValues"
-    elif "productStarsResult.txt" == filename:
-        meta = "Stars"
-    elif "productNamesResult.txt" == filename:
-        meta = "Names"
+    if "products_discounts_result.txt" == filename:
+        meta = "discount_values"
+    elif "products_stars_result.txt" == filename:
+        meta = "stars"
+    elif "products_names_result.txt" == filename:
+        meta = "names"
     else:
-        meta = "Prices"
-    getExtractedFile = f"{meta}extracted.txt"
+        meta = "prices"
+    extracted_file = f"extracted_{meta}.txt"
 
-    with open(getExtractedFile, "a", encoding="utf-8") as result:
+    with open(extracted_file, "a", encoding="utf-8") as result:
         with open(filename, "r", encoding="utf-8") as mainFile:
             lines = mainFile.readlines()
             regexed = re.sub(r"<[^>]*>", "\n", "".join(lines))
@@ -189,21 +189,21 @@ def extractor(filename):
                 else:
                     result.write(char)
 
-    print("Cleaning Up...")
+    print("Cleaning up...")
     os.remove(filename)
-    cleanizer(getExtractedFile)
+    cleanizer(extracted_file)
 
 
-def discountValuesScarpe():
-    print("Extracting Discount Values...")
-    with open("data.txt", "r", encoding="utf-8") as datafile:
-        with open("productDiscountsResult.txt", "a+", encoding="utf-8") as result:
+def products_discount_values_scraper():
+    print("Extracting discount values...")
+    with open("pages_result.txt", "r", encoding="utf-8") as f:
+        with open("products_discounts_result.txt", "a+", encoding="utf-8") as result:
             only_discount_box = SoupStrainer(
                 "div", {"class": "c-product-box__row c-product-box__row--price"}
             )
-            data = datafile.readlines()
+            context = f.readlines()
             soup = BeautifulSoup(
-                "".join(data), "html.parser", parse_only=only_discount_box
+                "".join(context), "html.parser", parse_only=only_discount_box
             )
             containers = soup.find_all(
                 "div", class_="c-product-box__row c-product-box__row--price"
@@ -219,18 +219,18 @@ def discountValuesScarpe():
                     result.write("%۰" + "\n")
                     continue
 
-            del data, soup, containers
+            del context, soup, containers
 
-    extractor("productDiscountsResult.txt")
+    extractor("products_discounts_result.txt")
 
 
-def starsScarper():
+def products_stars_scraper():
     print("Extracting Stars...")
-    with open("data.txt", "r", encoding="utf-8") as datafile:
-        with open("productStarsResult.txt", "a+", encoding="utf-8") as result:
-            data = datafile.readlines()
+    with open("pages_result.txt", "r", encoding="utf-8") as f:
+        with open("products_stars_result.txt", "a+", encoding="utf-8") as result:
+            context = f.readlines()
             engagement = SoupStrainer("div", {"class": "c-product-box__content"})
-            soup = BeautifulSoup("".join(data), "html.parser", parse_only=engagement)
+            soup = BeautifulSoup("".join(context), "html.parser", parse_only=engagement)
             containers = soup.find_all("div", class_="c-product-box__content")
             for container in containers:
                 if "c-product-box__engagement-rating" in str(container):
@@ -247,38 +247,38 @@ def starsScarper():
                     result.write("۰.۰" + "\n")
                     continue
 
-            del data, soup, containers
+            del context, soup, containers
 
-    extractor("productStarsResult.txt")
+    extractor("products_stars_result.txt")
 
 
-def productNamesScarpe():
+def products_names_scraper():
     print("Extracting product names...")
-    with open("data.txt", "r", encoding="utf-8") as datafile:
-        with open("productNamesResult.txt", "a+", encoding="utf-8") as result:
-            data = datafile.readlines()
+    with open("pages_result.txt", "r", encoding="utf-8") as f:
+        with open("products_names_result.txt", "a+", encoding="utf-8") as result:
+            context = f.readlines()
             productNames = SoupStrainer("a", {"class": "js-product-url"})
-            soup = BeautifulSoup("".join(data), "html.parser", parse_only=productNames)
+            soup = BeautifulSoup("".join(context), "html.parser", parse_only=productNames)
             productName = soup.find_all("a", class_="js-product-url")
             if productName and productName != " ":
                 result.write(str(productName))
 
             else:
                 result.write("Not Found.")
-            del data, soup, productName
+            del context, soup, productName
 
-    extractor("productNamesResult.txt")
+    extractor("products_names_result.txt")
 
 
-def pricesScarpe():
-    print("Extracting Prices...")
-    with open("data.txt", "r", encoding="utf-8") as datafile:
-        with open("productPricesResult.txt", "a+", encoding="utf-8") as result:
-            data = datafile.readlines()
+def products_prices_scraper():
+    print("Extracting prices...")
+    with open("pages_result.txt", "r", encoding="utf-8") as f:
+        with open("products_prices_result.txt", "a+", encoding="utf-8") as result:
+            context = f.readlines()
             Prices = SoupStrainer(
                 "div", {"class": "c-product-box__row c-product-box__row--price"}
             )
-            soup = BeautifulSoup("".join(data), "html.parser", parse_only=Prices)
+            soup = BeautifulSoup("".join(context), "html.parser", parse_only=Prices)
             containers = soup.find_all(
                 "div", class_="c-product-box__row c-product-box__row--price"
             )
@@ -301,16 +301,16 @@ def pricesScarpe():
                         str(container.find("div", class_="c-price__value-wrapper"))
                         + "\n"
                     )
-            del data, soup, containers
+            del context, soup, containers
 
-    extractor("productPricesResult.txt")
+    extractor("products_prices_result.txt")
 
 
-def check(userInput):
+def check(user_input):
     checklist = []
     alphabet = "abcdefghijklmnopqrstuvwxyz,ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()/\«»<>_+"
     for char in alphabet:
-        if char in userInput:
+        if char in user_input:
             checklist.append(False)
         checklist.append(True)
 
@@ -318,155 +318,155 @@ def check(userInput):
         return True
 
 
-def greetUser():
-    global excelFile, time, timeSheet
-    usecurrentdata = 0
-    """ Greets User And Takes Scraping Options."""
-    print("Digikala WebScarper V2 Optimized")
-    print("Hello User. I can scarpe digikala and write data to excel")
+def main():
+    global excel_file, now, time_sheet
+    use_current_data = 0
+    # Greet to user and take scraping options
+    print("Digikala web scraper v2 (optimized)")
+    print("Hello, user! I can scrape Digikala and write data to excel.")
     print("*" * 10)
-    selectedScarpingOptions = []
-    selectedDigikalaFilters = []
+    selected_options = []
+    selected_filters = []
     subject = input("Subject > ")
-    # TODO: Make Sure That pageRange Is A int
+    # TODO: Make sure that `pages_limit`` is an integer
 
-    pageRange = input("How Many Pages? > ")
+    pages_limit = input("How many pages? > ")
 
-    if not check(pageRange):
-        print("Invalid Number.")
-        greetUser()
+    if not check(pages_limit):
+        print("Invalid number!")
+        main()
 
-    if not pageRange:
-        print("Invalid Number.")
-        greetUser()
+    if not pages_limit:
+        print("Invalid number!")
+        main()
     try:
-        pageRange = int(pageRange) + 1  # Because of range function\
+        pages_limit = int(pages_limit) + 1  # Because of range function\
     except ValueError as error:
-        print(f"Got An {error}. Did you Give Too Many Numbers?")
-        greetUser()
+        print(f"Got an {error}. Did you give too many numbers?")
+        main()
 
-    excelFile = input("Excel File > ")
+    excel_file = input("Excel file > ")
 
-    if excelFile == " " or "":
-        greetUser()
-    if excelFile.endswith(".xlsx"):
+    if excel_file == " " or "":
+        main()
+    if excel_file.endswith(".xlsx"):
         pass
     else:
-        excelFile += ".xlsx"
+        excel_file += ".xlsx"
 
     print("*" * 10)
     print(
-        "Scarping Options : *Select One Or More Options and seperate them with spaces* "
+        "Scarping options : *Select One Or More Options and seperate them with spaces* "
     )
     print(
         """
-    1- Product Names 2- Product Prices
-    3- Product Discount Values 4 - Stars"""
+    1- Products names 2- Products prices
+    3- Products discount values 4- Products stars"""
     )
     print("*" * 10)
 
-    userInput = input("> ")
+    user_input = input("> ")
 
-    result = check(userInput)
+    result = check(user_input)
 
     # Add selected scarping options to list
 
-    if result and userInput != "":
-        for number in set(userInput.split()):
+    if result and user_input != "":
+        for number in set(user_input.split()):
             if int(number) > 4:
-                print("Invalid Option")
-                greetUser()
+                print("Invalid option!")
+                main()
 
             else:
                 if int(number) == 1:
-                    selectedScarpingOptions.append("productNamesScarpe()")
+                    selected_options.append("products_names_scraper()")
 
                 if int(number) == 2:
-                    selectedScarpingOptions.append("pricesScarpe()")
+                    selected_options.append("products_prices_scraper()")
 
                 if int(number) == 3:
-                    selectedScarpingOptions.append("discountValuesScarpe()")
+                    selected_options.append("products_discount_values_scraper()")
 
                 if int(number) == 4:
-                    selectedScarpingOptions.append("starsScarper()")
+                    selected_options.append("products_stars_scraper()")
 
     else:
-        print("Alphabet Character Or ',' Detected.")
-        greetUser()
+        print("Alphabet character or ',' detected!")
+        main()
 
-    if os.path.isfile("data.txt"):
-        print("Use Current Digikala Web Data ?[Y/N]")
+    if os.path.isfile("pages_result.txt"):
+        print("Use current Digikala web data? [Y/n] ")
         yon = input("> ")
         if yon.lower().startswith("y"):
-            usecurrentdata = 1
+            use_current_data = 1
 
         elif yon.lower().startswith("n"):
-            usecurrentdata = 0
+            use_current_data = 0
 
         else:
-            print("Wrong Choice. ")
-            greetUser()
+            print("Wrong choice!")
+            main()
     else:
-        usecurrentdata = 0
+        use_current_data = 0
         pass
 
-    print("Digikala Filters : ")
+    print("Digikala filters: ")
     print("*" * 10)
-    print("Select One Or More Options and seperate them with spaces: ")
+    print("Select one or more options and seperate them with spaces: ")
     print(
         """
-    ** Choosing Too Much Options Or Bad Options Might Affect Digikala Searchs.**
-    1- Only DigiPlus                            10- Seller = Indigenous Seller
-    2- Only SuperMarkets                        11- Bestselling
-    3- Ship By Seller                           12- Most relevant
-    4- Fast Delivery                            13- Most visited
-    5- Only Avalaibles                          14- Newests
-    6- Only Avalaibles In DigiKala's Store      15- Cheapest
-    7- Seller = DigiKala                        16- Most Expensives
-    8- Seller = Officials                       17- Fastest post
-    9- Seller = Trusted                         18- None
+    ** Choosing too much options or bad options might affect Digikala searchs.**
+    1- Only DigiPlus                            10- Seller (indigenous seller)
+    2- Only Supermarkets                        11- Bestselling
+    3- Ship by seller                           12- Most relevant
+    4- Fast delivery                            13- Most visited
+    5- Only avalaibles                          14- Newests
+    6- Only avalaibles in DigiKala's store      15- Cheapest
+    7- Seller (DigiKala)                        16- Most expensives
+    8- Seller (officials)                       17- Fastest post
+    9- Seller (trusted)                         18- None
     """
     )
-    userInput = input("> ")
-    result = check(userInput)
+    user_input = input("> ")
+    result = check(user_input)
 
     if result == True:
-        print("Extracting Data From Digikala...")
-        userInput = set(userInput.split())
-        for i in userInput:
+        print("Extracting data from Digikala...")
+        user_input = set(user_input.split())
+        for i in user_input:
             i = int(i)
             if i == 18:
                 break
 
         else:
-            for selectedOption in userInput:
-                if int(selectedOption) < 18:
-                    selectedOption = int(selectedOption) - 1
-                    selectedDigikalaFilters.append(
-                        DigikalaFilters[selectedOption]
+            for selected_option in user_input:
+                if int(selected_option) < 18:
+                    selected_option = int(selected_option) - 1
+                    selected_filters.append(
+                        DIGIKALA_FILTERS[selected_option]
                     )  # Add Elements By Index
                     continue
                 else:
                     continue
     else:
-        print("Invalid Choice.")
-        greetUser()
+        print("Invalid choice!")
+        main()
 
-    if usecurrentdata == 0:
-        extractdata(subject, pageRange, selectedDigikalaFilters)
+    if use_current_data == 0:
+        extract_data(subject, pages_limit, selected_filters)
     else:
         pass
 
-    timeSheet = (
-        f"{time.year} {time.day} {time.month} {time.hour} {time.minute} {time.second}"
+    time_sheet = (
+        f"{now.year} {now.day} {now.month} {now.hour} {now.minute} {now.second}"
     )
-    for option in selectedScarpingOptions:
+    for option in selected_options:
         exec(option)
-        writer(excelFile)
+        writer(excel_file)
 
-    print("Finish.\n\n\n")
+    print("All done!\n\n")
     print("*" * 10)
-    greetUser()
+    main()
 
 
-greetUser()
+main()
