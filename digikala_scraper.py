@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# from time import sleep
 from typing import Optional, Generator, List, Dict, Any
 
 import pandas as pd
@@ -11,7 +10,7 @@ class DigikalaScraper:
     """Scraper for Digikala.com website to get producs data.
 
     Attributes:
-        session: `requests_html.HTMLSession` object.
+        asession: `requests_html.HTMLSession` object.
         filters: A dictionary of search filters query parameters.
     """
 
@@ -24,24 +23,24 @@ class DigikalaScraper:
             'jet_delivery': 'has_jet_delivery=1',
             'available_items': 'has_selling_stock=1',
             'available_in_stores': 'has_ready_to_shipment=1',
-            'seller_digikala': 'seller_condition[0]=digikala',
-            'seller_official': 'seller_condition[1]=official',
-            'seller_trusted': 'seller_condition[2]=trusted',
-            'seller_indigenous': 'seller_condition[3]=roosta',
-            'most_relevant': 'sortby=22',
-            'most_viewed': 'sortby=4',
-            'newest': 'sortby=1',
-            'best_selling': 'sortby=7',
-            'cheapest': 'sortby=20',
-            'most_expensive': 'sortby=21',
-            'fastest_post': 'sortby=25',
+            'seller_digikala': 'seller_types[0]=digikala',
+            'seller_official': 'seller_types[1]=official',
+            'seller_trusted': 'seller_types[2]=trusted',
+            'seller_indigenous': 'seller_types[3]=roosta',
+            'most_relevant': 'sort=22',
+            'most_viewed': 'sort=4',
+            'newest': 'sort=1',
+            'best_selling': 'sort=7',
+            'cheapest': 'sort=20',
+            'most_expensive': 'sort=21',
+            'fastest_post': 'sort=25',
         }
 
-    def _scrape_page_products(self, url: str) -> Generator[Dict[str, Any], None, None]:
+    def _scrape_page_products(self, url: str) -> Generator[Dict[str, str], None, None]:
         """Scrapes and yields products data from a page."""
         print(f'Scraping {url}...')
         response = self.session.get(url)
-        response.html.render(timeout=60)
+        response.html.render(timeout=45, sleep=2)  # Wait 2 second after the page is loaded
 
         products = response.html.xpath('//a[contains(@class, "d-block pointer pos-relative")]')
         for product in products:
@@ -49,10 +48,10 @@ class DigikalaScraper:
             price = product.xpath('//div[@class="pt-1 d-flex flex-column ai-stretch jc-between"]//div[contains(@class, "jc-end gap-1")]', first=True)
             price = price.text if price is not None else "ناموجود"
             discount = product.xpath('//div[@class="pt-1 d-flex flex-column ai-stretch jc-between"]//div[contains(@class, "__discountWrapper__")]', first=True)
-            discount = discount.text if discount is not None else 0
+            discount = discount.text if discount is not None else '-'
             star = product.xpath('//div[@class="grow-1 d-flex flex-column ai-stretch jc-start"]//p[contains(@class, "text-body2-strong")]', first=True)
-            star = star.text if star is not None else 0
-            link = product.attrs['href']
+            star = star.text if star is not None else '-'
+            link = f'https://www.digikala.com{product.attrs["href"]}'
             yield {
                 'name': name,
                 'price': price,
@@ -62,7 +61,7 @@ class DigikalaScraper:
             }
 
     def get_products(self, subject: str, pages_limit: Optional[int] = 5,
-                     filters: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+                     filters: Optional[List[str]] = None) -> List[Dict[str, str]]:
         """Scrapes products data from Digikala.com website.
 
         Args:
@@ -87,24 +86,25 @@ class DigikalaScraper:
         return products
 
 
-def _get_dict_keys_by_indexes(dictionary: Dict[Any, Any], indexes: List[int]) -> List[Any]:
-    """Accesses a dictionary values by indexes."""
-    keys = []
+def _get_dict_keys_by_indexes(
+    dictionary: Dict[Any, Any],
+    indexes: List[int],
+) -> Generator[Any, None, None]:
+    """Yields a list of keys based on the given indexes."""
     for idx, key in enumerate(dictionary):
         if idx in indexes:
-            keys.append(key)
-    return keys
+            yield key
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import sys
     from pathlib import Path
 
     digikala_scraper = DigikalaScraper()
 
-    print("\n\t\tDigikala.com Scraper: Scrape and export products data in few seconds\n")
-    subject = input("Enter the subject to search for: ")
-    pages_limit = input("Enter the number of pages to scrape (default is 5): ")
+    print('\n\t\tDigikala Website Scraper: Scrape and export products data in few seconds easily\n')
+    subject = input('Enter the subject to search for: ')
+    pages_limit = input('Enter the number of pages to scrape (default is 5): ')
     pages_limit = int(pages_limit) if pages_limit.isnumeric() else 5
     filters = input("""Some filters can be applied to the search results:
     1. Only DigiPlus                        10. Sells by indiendigenous sellers
@@ -117,14 +117,14 @@ if __name__ == "__main__":
     8. Sells officially                     17. Fastest post
     9. Sells by trusted sellers
     \b\b\b\bEnter the filters to apply (press enter for none): """)
-    filters = _get_dict_keys_by_indexes(digikala_scraper.filters, [int(filter)-1 for filter in filters.split()]) if filters else None
+    filters = list(_get_dict_keys_by_indexes(digikala_scraper.filters, [int(filter)-1 for filter in filters.split()])) if filters else None
     print()  # Just to make the output look better
 
     results = pd.DataFrame(digikala_scraper.get_products(subject, pages_limit, filters))
     if results.empty:
-        print("Sorry, no results found. Please try again later.")
+        print('No results found. Please try again later.')
         sys.exit(1)
 
-    Path("exports").mkdir(exist_ok=True)
-    results.to_excel(f"exports/{subject}_results.xlsx", index=False)
-    print("All done! Check the results in the exports folder.")
+    Path('exports').mkdir(exist_ok=True)
+    results.to_excel(f'exports/{subject}.xlsx', index=False)
+    print('All done! Check the results in the exports folder.')
