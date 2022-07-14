@@ -1,6 +1,7 @@
 # Digikala.com Website Scraper
 
 This program scrapes the Digikala.com website and saves the products information such as name, price, discount and its stars in an Excel file.
+You can check pre-extracted data in the exports folder.
 
 ## Usage
 
@@ -18,4 +19,4 @@ python digikala_scraper.py
 
 ## License
 
-No license specified for this project yet.
+You can see check the MIT License in the LICENSE.md File.
